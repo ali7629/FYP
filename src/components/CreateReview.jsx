@@ -375,7 +375,7 @@ const CreateReview = () => {
       const listingPrice = 0.001;
       const ListingPriceInWei = web3.utils.toWei(listingPrice.toString(), 'ether');
       const amountInWei = web3.utils.toWei(amountInEther.toString(), 'ether');
-      const newNFT = await myContarct.methods.createReviewNFT(nftUrl, amountInWei, domain).send({ from: currentAccount, value: ListingPriceInWei });
+      const newNFT = await myContarct.methods.createReviewNFT("https://res.cloudinary.com/demo/image/upload/w_300,h_200,c_fill/sample.jpg", amountInWei, domain).send({ from: currentAccount, value: ListingPriceInWei });
       console.log(newNFT);
       setReview('');
       await getAllNfts();
