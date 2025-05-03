@@ -48,3 +48,9 @@ background: linear-gradient(90deg, rgba(67,206,162,1) 0%, rgba(24,90,157,1) 100%
  color: white !important;
  border: none !important;
  }
+
+ @keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

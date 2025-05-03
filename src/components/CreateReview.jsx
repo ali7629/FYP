@@ -329,6 +329,9 @@ const CreateReview = () => {
   const [comment, setComment] = useState('');
   const [allNfts, setAllNfts] = useState([]);
   const [nftUrl, setNftUrl] = useState('');
+  const [Error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [dynamicURl, setDynamicURl] = useState('');
   const { domain } = useParams();
   const context = useContext(walletContext);
   const { myContarct, currentAccount, user } = context;
@@ -336,8 +339,8 @@ const CreateReview = () => {
   // const projectId = import.meta.env.VITE_APP_NFT_IPFS_PROJECT_ID;
   // const projectSecret = import.meta.env.VITE_APP_NFT_IPFS_API_KEY_SECRET;
   // const ALCHEMY_API_KEY = 'h1p2nABnv5Cez0nP6BeqJMcgPYu4-9T9';   // Faizi need to revert
-   const ALCHEMY_API_KEY = 'dw5vXCEI5oK18g8z0XSMnTlAp6Ldkj2j';
-  
+  const ALCHEMY_API_KEY = 'dw5vXCEI5oK18g8z0XSMnTlAp6Ldkj2j';
+
   // const auth = `Basic ${Buffer.from(`${projectId}:${projectSecret}`).toString('base64')}`;
   const navigate = useNavigate();
   const client = ipfsHttpClient({
@@ -348,21 +351,65 @@ const CreateReview = () => {
       Authorization: `Bearer ${ALCHEMY_API_KEY}`,
     },
   });
+
+
   const generateImage = async (e) => {
+    e.preventDefault();
+    if (!review.trim()) {
+      setError("Please write a review before submitting")
+      // alert("Please write a review before submitting.");
+      return;
+    }
+
     try {
-      e.preventDefault();
+      setIsLoading(true)
+      setError("")
       const reviewContainer = document.getElementById('review-container');
       if (reviewContainer) {
         reviewContainer.style.visibility = 'visible'; // Make the container visible temporarily
-        html2canvas(reviewContainer).then((canvas) => {
+        // html2canvas(reviewContainer).then((canvas) => {
+        //   reviewContainer.style.visibility = 'hidden'; // Hide the container again
+        //   const imgData = canvas.toDataURL('image/png');
+        //   // setImageUrl(imgData);
+        //   uploadToIPFS(imgData).then((url) => {
+        //     setNftUrl(url);
+        //     console.log(nftUrl)
+        //   });
+        // });
+
+
+        html2canvas(reviewContainer).then(async (canvas) => {
           reviewContainer.style.visibility = 'hidden'; // Hide the container again
           const imgData = canvas.toDataURL('image/png');
-          // setImageUrl(imgData);
-          uploadToIPFS(imgData).then((url) => {
-            setNftUrl(url);
-            console.log(nftUrl)
-          });
+
+          // Convert data URL to Blob
+          const blob = await (await fetch(imgData)).blob();
+
+          // Prepare form data for Cloudinary
+          const formData = new FormData();
+          formData.append('file', blob);
+          formData.append('upload_preset', 'social_sahre'); // Your unsigned preset
+          // You do NOT need to add 'cloud_name' here unless your Cloudinary setup requires it in URL
+
+          try {
+            const response = await fetch('https://api.cloudinary.com/v1_1/dfimdpjcd/image/upload', {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await response.json();
+            console.log({ data })
+            if (data.secure_url) {
+              console.log('Cloudinary Upload Success:', data?.secure_url);
+              setNftUrl(data.secure_url);
+            } else {
+              console.error('Cloudinary Upload Failed:', data);
+            }
+          } catch (error) {
+            console.error('Error uploading to Cloudinary:', error);
+          }
         });
+
         // const canvas = await html2canvas(reviewContainer);
         // reviewContainer.style.visibility = 'hidden'; // Hide the container again
         // const imgData = canvas.toDataURL('image/png');
@@ -375,13 +422,16 @@ const CreateReview = () => {
       const listingPrice = 0.001;
       const ListingPriceInWei = web3.utils.toWei(listingPrice.toString(), 'ether');
       const amountInWei = web3.utils.toWei(amountInEther.toString(), 'ether');
-      const newNFT = await myContarct.methods.createReviewNFT("https://res.cloudinary.com/demo/image/upload/w_300,h_200,c_fill/sample.jpg", amountInWei, domain).send({ from: currentAccount, value: ListingPriceInWei });
+      const newNFT = await myContarct.methods.createReviewNFT(nftUrl, amountInWei, domain).send({ from: currentAccount, value: ListingPriceInWei });
       console.log(newNFT);
       setReview('');
       await getAllNfts();
 
     } catch (error) {
       console.error('Error upvoting review:', error);
+    }
+    finally {
+      setIsLoading(false)
     }
   };
   const fetchFileContent = async (fileUrl) => {
@@ -421,7 +471,7 @@ const CreateReview = () => {
       // console.log({ added, url })
       // const url = `https://ipfs.alchemy.com/ipfs/${added.path}`;
       const url = `https://res.cloudinary.com/demo/image/upload/w_300,h_200,c_fill/sample.jpg`;
-      console.log({ url})
+      console.log({ url })
       return url;
     } catch (error) {
       console.error('Error uploading file to IPFS:', error);
@@ -571,11 +621,41 @@ const CreateReview = () => {
           <form className=''>
             <div className="mb-3 review-content" >
               <label htmlFor="username" className="form-label h6">Write a Review</label>
-              <input type="text" className="form-control review-text bg-form" id="review" value={review} onChange={(e) => setReview(e.target.value)} />
-            </div>
+              <input type="text" className="form-control review-text bg-form" id="review" value={review}
+                //  onChange={(e) => setReview(e.target.value)}
+                onChange={(e) => {
+                  setReview(e.target.value);
+                  if (e.target.value.trim() !== '') {
+                    setError('');
+                  }
+                }}
 
+
+              />
+            </div>
+            {Error &&
+              <p className='text-red-900' style={{ color: "red" }}>{Error}</p>
+            }
             <div className="d-flex justify-content-center">
-              <button className="btn-gradient" onClick={generateImage}>Submit</button>
+              <button className="btn-gradient w-full " style={{ width: "100px", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={generateImage}>
+                {isLoading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid white',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }}
+                    ></span>
+
+                  </div>
+                ) :
+                  "Submit"
+                }
+              </button>
             </div>
 
           </form >
