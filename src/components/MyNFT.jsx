@@ -2,14 +2,17 @@ import React, { useEffect, useContext, useState } from 'react';
 import walletContext from '../Context/walletContext';
 import Web3 from 'web3';
 import { useNavigate } from 'react-router-dom';
+import Spinner from './spinner';
 
 const MyNFT = () => {
     const [allNfts, setAllNfts] = useState([]);
+    const [loading, setLoading] = useState(false);
     const context = useContext(walletContext);
     const { myContarct, currentAccount,user } = context;
     const navigate = useNavigate();
     const web3 = new Web3(window.ethereum);
     const getAllNfts = async () => {
+        setLoading(true)
         try {
             const AllNftsTokenId = await myContarct.methods.fetchUserNFTs().call({ from: currentAccount });
             // console.log(AllNftsTokenId);
@@ -22,6 +25,8 @@ const MyNFT = () => {
             setAllNfts(AllNFTS);
         } catch (error) {
             console.error('Error getting all NFT:', error);
+        }finally{
+            setLoading(false)
         }
     }
     const handleComment = (SectionId) => {
@@ -47,14 +52,18 @@ const MyNFT = () => {
         getAllNfts();
         isWalletConnected();
     },[]);
+
+    if(loading){
+        return <Spinner/>
+    }
     return (
         <>
-            <div className="container ">
+            <div className="container overflow-x-hidden ">
 
                 <div className="row">
                     <h1 className="text-center my-4">MY NFT's</h1>
                     {
-                        allNfts.map((NFT, key) => (
+                        allNfts.slice(4).map((NFT, key) => (
 
                             <div className='col-md-6 col-sm-6 col-12' key={key}>
                                 <div className='shadow p-3 my-5 bg-form rounded mx-2'>

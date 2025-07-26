@@ -399,7 +399,7 @@ const CreateReview = () => {
 
             const data = await response.json();
             console.log({ data })
-            if (data.secure_url) {
+            if (data.secure_url) {~
               console.log('Cloudinary Upload Success:', data?.secure_url);
               setNftUrl(data.secure_url);
             } else {
@@ -602,7 +602,7 @@ const CreateReview = () => {
   return (
     <>
       <div className="container ">
-        <div className='shadow p-3 mt-5 bg-body-tertiary rounded bg-gardient'>
+        <div className='wallet-bg shadow p-3 mt-5 bg-body-tertiary rounded bg-gardient'>
           <h1 className="mt-4 ms-5">{bussiness.username}</h1>
           <div className="d-flex">
             <p className='ms-5  h5'>{bussiness.businessCategory}</p>

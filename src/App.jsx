@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import walletContext from "./Context/walletContext.jsx";
 import Navbar from "./components/Navbar.jsx";
-import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import UserLogin from './components/UserLogin.jsx';
 import BussinessLogin from "./components/BussinessLogin.jsx";
 import CreateReview from "./components/CreateReview.jsx";
